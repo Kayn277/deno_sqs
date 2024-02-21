@@ -4,6 +4,8 @@ export interface SendMessageOptions {
    * is 256 KB.
    */
   body: string;
+  messageGroupId: string;
+  messageDeduplicationId: string;
 }
 
 export interface SendMessageResponse {

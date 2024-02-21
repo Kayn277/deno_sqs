@@ -41,7 +41,7 @@ export class SQSQueue {
     params: Params,
     method: string,
     headers: { [key: string]: string },
-    body?: Uint8Array | undefined,
+    body?: Uint8Array | undefined
   ): Promise<Response> {
     const url = new URL(this.#queueURL + path);
     for (const key in params) {
@@ -53,28 +53,27 @@ export class SQSQueue {
       body,
     });
 
-    const signedRequest = await this.#signer.sign(
-      "sqs",
-      request,
-    );
+    const signedRequest = await this.#signer.sign("sqs", request);
     const contentHash = await sha256Hex(body ?? "");
     signedRequest.headers.set("x-amz-content-sha256", contentHash);
     return fetch(signedRequest);
   }
 
-  async sendMessage(
-    options: SendMessageOptions,
-  ): Promise<SendMessageResponse> {
+  async sendMessage(options: SendMessageOptions): Promise<SendMessageResponse> {
     const res = await this._doRequest(
       "/",
-      { Action: "SendMessage", MessageBody: options.body },
+      {
+        Action: "SendMessage",
+        MessageBody: options.body,
+        MessageGroupId: options.messageGroupId,
+      },
       "GET",
-      {},
+      {}
     );
     if (!res.ok) {
       throw new SQSError(
         `Failed to send message: ${res.status} ${res.statusText}`,
-        await res.text(),
+        await res.text()
       );
     }
     const xml = await res.text();
@@ -82,7 +81,7 @@ export class SQSQueue {
   }
 
   async receiveMessage(
-    options?: ReceiveMessageOptions,
+    options?: ReceiveMessageOptions
   ): Promise<ReceiveMessageResponse> {
     const params: Params = { Action: "ReceiveMessage" };
     if (options) {
@@ -96,16 +95,11 @@ export class SQSQueue {
         params["WaitTimeSeconds"] = options.waitTimeSeconds.toString();
       }
     }
-    const res = await this._doRequest(
-      "/",
-      params,
-      "GET",
-      {},
-    );
+    const res = await this._doRequest("/", params, "GET", {});
     if (!res.ok) {
       throw new SQSError(
         `Failed to receive message: ${res.status} ${res.statusText}`,
-        await res.text(),
+        await res.text()
       );
     }
     const xml = await res.text();
@@ -117,12 +111,12 @@ export class SQSQueue {
       "/",
       { Action: "PurgeQueue" },
       "POST",
-      {},
+      {}
     );
     if (!res.ok) {
       throw new SQSError(
         `Failed to purge queue: ${res.status} ${res.statusText}`,
-        await res.text(),
+        await res.text()
       );
     }
     await res.arrayBuffer();
@@ -134,12 +128,12 @@ export class SQSQueue {
       "/",
       { Action: "DeleteMessage", ReceiptHandle: receiptHandle },
       "POST",
-      {},
+      {}
     );
     if (!res.ok) {
       throw new SQSError(
         `Failed to delete message: ${res.status} ${res.statusText}`,
-        await res.text(),
+        await res.text()
       );
     }
     await res.arrayBuffer();
